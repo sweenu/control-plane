@@ -5,6 +5,8 @@ import (
 
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
+
+	_ "relay-control-plane/migrations"
 )
 
 func main() {
