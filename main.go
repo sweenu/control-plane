@@ -18,6 +18,7 @@ func main() {
 		routes.RegisterFileTokenRoutes(se)
 		routes.RegisterInvitationRoutes(se)
 		routes.RegisterRotateKeyRoutes(se)
+		routes.RegisterSelfHostRoutes(se)
 		return se.Next()
 	})
 
