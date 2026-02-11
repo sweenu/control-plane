@@ -13,6 +13,9 @@ import (
 func main() {
 	app := pocketbase.New()
 
+	routes.RegisterHooks(app)
+	routes.RegisterAuthHooks(app)
+
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		routes.RegisterTokenRoutes(se)
 		routes.RegisterFileTokenRoutes(se)
