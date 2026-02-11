@@ -1,0 +1,14 @@
+[server]
+url = "{{.URL}}"
+valid_issuers = ["{{.Issuer}}"]
+
+host = "0.0.0.0"
+port = 8080
+
+[[auth]]
+key_id = "{{.KeyID}}"
+public_key = "{{.PublicKey}}"
+
+[store]
+type = "filesystem"
+path = "./data"

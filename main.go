@@ -19,6 +19,7 @@ func main() {
 		routes.RegisterInvitationRoutes(se)
 		routes.RegisterRotateKeyRoutes(se)
 		routes.RegisterSelfHostRoutes(se)
+		routes.RegisterTemplateRoutes(se)
 		return se.Next()
 	})
 
