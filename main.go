@@ -7,13 +7,14 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 
 	_ "relay-control-plane/migrations"
+	"relay-control-plane/routes"
 )
 
 func main() {
 	app := pocketbase.New()
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
-		// Custom routes will be registered here
+		routes.RegisterTokenRoutes(se)
 		return se.Next()
 	})
 
