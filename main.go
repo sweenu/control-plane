@@ -15,6 +15,7 @@ func main() {
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		routes.RegisterTokenRoutes(se)
+		routes.RegisterFileTokenRoutes(se)
 		return se.Next()
 	})
 
