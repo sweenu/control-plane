@@ -1,3 +1,4 @@
 .devenv/
+.devenv.lock
 .devenv.flake.nix
-devenv.lock
+result
