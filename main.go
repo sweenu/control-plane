@@ -17,6 +17,7 @@ func main() {
 	routes.RegisterAuthHooks(app)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		routes.RegisterCodeExchangeMiddleware(se)
 		routes.RegisterTokenRoutes(se)
 		routes.RegisterFileTokenRoutes(se)
 		routes.RegisterInvitationRoutes(se)
