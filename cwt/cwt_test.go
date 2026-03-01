@@ -9,9 +9,10 @@ import (
 
 var testKey = []byte("test_key_1234567890123456789012")
 var testKeyId = "test-key-id"
+var testIssuer = "test-control-plane"
 
 func TestGenerateDocToken_Base64Decodable(t *testing.T) {
-	token, err := GenerateDocToken(testKey, testKeyId, "doc123", "user1", "https://relay.example.com", "full", 3600)
+	token, err := GenerateDocToken(testKey, testKeyId, testIssuer, "doc123", "user1", "https://relay.example.com", "full", 3600)
 	if err != nil {
 		t.Fatalf("GenerateDocToken failed: %v", err)
 	}
@@ -23,7 +24,7 @@ func TestGenerateDocToken_Base64Decodable(t *testing.T) {
 }
 
 func TestGenerateDocToken_CWTTag61(t *testing.T) {
-	token, err := GenerateDocToken(testKey, testKeyId, "doc123", "user1", "https://relay.example.com", "full", 3600)
+	token, err := GenerateDocToken(testKey, testKeyId, testIssuer, "doc123", "user1", "https://relay.example.com", "full", 3600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +41,7 @@ func TestGenerateDocToken_CWTTag61(t *testing.T) {
 }
 
 func TestGenerateDocToken_COSEMac0Tag17(t *testing.T) {
-	token, err := GenerateDocToken(testKey, testKeyId, "doc123", "user1", "https://relay.example.com", "full", 3600)
+	token, err := GenerateDocToken(testKey, testKeyId, testIssuer, "doc123", "user1", "https://relay.example.com", "full", 3600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +69,7 @@ func TestGenerateDocToken_COSEMac0Tag17(t *testing.T) {
 }
 
 func TestGenerateDocToken_ProtectedHeaders(t *testing.T) {
-	token, err := GenerateDocToken(testKey, testKeyId, "doc123", "user1", "https://relay.example.com", "full", 3600)
+	token, err := GenerateDocToken(testKey, testKeyId, testIssuer, "doc123", "user1", "https://relay.example.com", "full", 3600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +107,7 @@ func TestGenerateDocToken_ProtectedHeaders(t *testing.T) {
 }
 
 func TestGenerateDocToken_ClaimsKeys(t *testing.T) {
-	token, err := GenerateDocToken(testKey, testKeyId, "doc123", "user1", "https://relay.example.com", "full", 3600)
+	token, err := GenerateDocToken(testKey, testKeyId, testIssuer, "doc123", "user1", "https://relay.example.com", "full", 3600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +134,7 @@ func TestGenerateDocToken_ClaimsKeys(t *testing.T) {
 }
 
 func TestGenerateDocToken_HMACTag8Bytes(t *testing.T) {
-	token, err := GenerateDocToken(testKey, testKeyId, "doc123", "user1", "https://relay.example.com", "full", 3600)
+	token, err := GenerateDocToken(testKey, testKeyId, testIssuer, "doc123", "user1", "https://relay.example.com", "full", 3600)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,6 +151,18 @@ func TestGenerateDocToken_HMACTag8Bytes(t *testing.T) {
 	}
 }
 
+func TestGenerateDocToken_CustomIssuer(t *testing.T) {
+	token, err := GenerateDocToken(testKey, testKeyId, testIssuer, "doc123", "user1", "https://relay.example.com", "full", 3600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	issuer := extractClaimString(t, token, 1)
+	if issuer != testIssuer {
+		t.Fatalf("expected issuer %q, got %q", testIssuer, issuer)
+	}
+}
+
 func TestGenerateDocToken_ScopeFormats(t *testing.T) {
 	tests := []struct {
 		auth  string
@@ -159,7 +172,7 @@ func TestGenerateDocToken_ScopeFormats(t *testing.T) {
 		{"read-only", "doc:doc123:r"},
 	}
 	for _, tt := range tests {
-		token, err := GenerateDocToken(testKey, testKeyId, "doc123", "user1", "https://relay.example.com", tt.auth, 3600)
+		token, err := GenerateDocToken(testKey, testKeyId, testIssuer, "doc123", "user1", "https://relay.example.com", tt.auth, 3600)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -179,7 +192,7 @@ func TestGenerateFileToken_ScopeFormats(t *testing.T) {
 		{"read-only", "file:abc123:doc456:r"},
 	}
 	for _, tt := range tests {
-		token, err := GenerateFileToken(testKey, testKeyId, "doc456", "user1", "https://relay.example.com", tt.auth, 3600, "abc123")
+		token, err := GenerateFileToken(testKey, testKeyId, testIssuer, "doc456", "user1", "https://relay.example.com", tt.auth, 3600, "abc123")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -219,6 +232,11 @@ func decodeCOSEMac0(t *testing.T, token string) []cbor.RawMessage {
 
 func extractScope(t *testing.T, token string) string {
 	t.Helper()
+	return extractClaimString(t, token, -80201)
+}
+
+func extractClaimString(t *testing.T, token string, key int64) string {
+	t.Helper()
 	mac0Array := decodeCOSEMac0(t, token)
 
 	var payload []byte
@@ -231,9 +249,9 @@ func extractScope(t *testing.T, token string) string {
 		t.Fatal(err)
 	}
 
-	var scope string
-	if err := cbor.Unmarshal(claims[-80201], &scope); err != nil {
+	var claim string
+	if err := cbor.Unmarshal(claims[key], &claim); err != nil {
 		t.Fatal(err)
 	}
-	return scope
+	return claim
 }
