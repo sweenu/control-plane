@@ -14,18 +14,18 @@ const DefaultIssuer = "relay-control-plane"
 
 // GenerateDocToken creates a CWT token for document access.
 // Authorization should be "full" (→ rw) or "read-only" (→ r).
-func GenerateDocToken(key []byte, keyId string, docId string, userId string, audience string, authorization string, expirySeconds int) (string, error) {
+func GenerateDocToken(key []byte, keyId string, issuer string, docId string, userId string, audience string, authorization string, expirySeconds int) (string, error) {
 	suffix := authSuffix(authorization)
 	scope := fmt.Sprintf("doc:%s:%s", docId, suffix)
-	return generateToken(key, keyId, userId, audience, scope, expirySeconds)
+	return generateToken(key, keyId, issuer, userId, audience, scope, expirySeconds)
 }
 
 // GenerateFileToken creates a CWT token for file access.
 // Authorization should be "full" (→ rw) or "read-only" (→ r).
-func GenerateFileToken(key []byte, keyId string, docId string, userId string, audience string, authorization string, expirySeconds int, fileHash string) (string, error) {
+func GenerateFileToken(key []byte, keyId string, issuer string, docId string, userId string, audience string, authorization string, expirySeconds int, fileHash string) (string, error) {
 	suffix := authSuffix(authorization)
 	scope := fmt.Sprintf("file:%s:%s:%s", fileHash, docId, suffix)
-	return generateToken(key, keyId, userId, audience, scope, expirySeconds)
+	return generateToken(key, keyId, issuer, userId, audience, scope, expirySeconds)
 }
 
 func authSuffix(authorization string) string {
@@ -35,11 +35,14 @@ func authSuffix(authorization string) string {
 	return "r"
 }
 
-func generateToken(key []byte, keyId string, userId string, audience string, scope string, expirySeconds int) (string, error) {
+func generateToken(key []byte, keyId string, issuer string, userId string, audience string, scope string, expirySeconds int) (string, error) {
 	now := uint64(time.Now().Unix())
 	exp := now + uint64(expirySeconds)
+	if issuer == "" {
+		issuer = DefaultIssuer
+	}
 
-	claims := buildClaimsMap(DefaultIssuer, userId, audience, exp, now, scope)
+	claims := buildClaimsMap(issuer, userId, audience, exp, now, scope)
 	payload, err := cbor.Marshal(claims)
 	if err != nil {
 		return "", fmt.Errorf("encoding claims: %w", err)
@@ -101,8 +104,8 @@ func buildClaimsMap(issuer, subject, audience string, exp, iat uint64, scope str
 // Key 1 = algorithm (4 = HMAC_256_64), Key 4 = key_id.
 func buildProtectedHeaders(keyId string) map[int]any {
 	return map[int]any{
-		1: 4,              // alg: HMAC 256/64
-		4: []byte(keyId),  // kid
+		1: 4,             // alg: HMAC 256/64
+		4: []byte(keyId), // kid
 	}
 }
 
